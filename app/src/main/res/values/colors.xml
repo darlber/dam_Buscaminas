@@ -1,5 +1,14 @@
-<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="black">#FF000000</color>
-    <color name="white">#FFFFFFFF</color>
+    <!-- Color primario (morado) -->
+    <color name="colorPrimary">#6B0478</color> <!-- Morado claro -->
+
+    <!-- Color de fondo de la Toolbar -->
+    <color name="colorToolbarBackground">#4C0256</color> <!-- Morado más oscuro -->
+
+    <!-- Fondo general de la actividad -->
+    <color name="colorBackground">#F5F5F5</color> <!-- Fondo claro (gris suave) -->
+    <color name="colorRevealedCell">#D3D3D3</color> <!-- Color de celdas reveladas -->
+    <color name="colorAccent">#FF0000</color> <!-- Color para minas -->
+    <color name="black">#000000</color> <!-- Color para minas -->
+
 </resources>
