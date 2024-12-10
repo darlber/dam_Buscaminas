@@ -18,7 +18,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 //TODO REVISAR CODIGO Y REFACTORIZAR,
-//TODO CAMBIAR NOMBRES HIPOS
 
 public class MainActivity extends AppCompatActivity {
     private SharedPreferences prefs;

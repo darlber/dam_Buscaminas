@@ -13,45 +13,30 @@ import android.widget.GridLayout;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.Spinner;
+import android.widget.TableLayout;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.content.ContextCompat;
 
 import java.util.Locale;
 //TODO EL SHARED PREF SE PASAN UN INDEX RARO
-//TODO El usuario realiza un click largo (onLongClick) sobre una casilla donde no hay una
-//hipotenocha. El juego muestra la casilla descubierta y termina.
-//2. El usuario realiza un click largo donde sí hay una hipotenocha, en este caso, se marca y
-//se indica que se ha encontrado una hipotenocha.
-//3. Se realiza un click corto (onClick) en una
-//casilla donde sí hay una hipotenocha. El
-//juego termina con derrota mostrando
-//una hipotenocha muerta (boca abajo y
-//tachada).
 
 public class GameActivity extends AppCompatActivity {
     private TextView timer;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_game);
 
-        // Set up the toolbar
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-
-        // Get saved difficulty
         int difficulty = getSavedDifficulty();
-
-        // Set up the GridLayout for the minesweeper grid
-        GridLayout gridMinesweeper = findViewById(R.id.grid_minesweeper);
-        gridMinesweeper.setColumnCount(difficulty);
-        gridMinesweeper.setRowCount(difficulty);
-
 
         timer = findViewById(R.id.timer);
         int totalMines = Logicas.getContadorMinas(difficulty);
@@ -63,19 +48,16 @@ public class GameActivity extends AppCompatActivity {
         // Create the game board
         int[][] board = Logicas.generateBoard(difficulty);
 
-        Logicas.crearMatriz(gridMinesweeper, difficulty, board);
-
-
+        TableLayout t = findViewById(R.id.grid_minesweeper);
+        Logicas.crearMatriz(t, difficulty, board, this);
 
         startTimer(timer);
-
 
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_toolbar, menu);
-
         return true;
     }
 
@@ -97,7 +79,7 @@ public class GameActivity extends AppCompatActivity {
 
             // Actualiza el icono del personaje en el menú
             MenuItem selectCharacterItem = menu.findItem(R.id.selec_personaje);
-            selectCharacterItem.setIcon(selectedCharacterResId);
+            selectCharacterItem.setIcon(ContextCompat.getDrawable(this, selectedCharacterResId));
         }
 
         return true;
@@ -192,12 +174,12 @@ public class GameActivity extends AppCompatActivity {
     private void startNewGame() {
         // Reiniciar el juego sin recrear la actividad
         int difficulty = getSavedDifficulty();
-        GridLayout gridMinesweeper = findViewById(R.id.grid_minesweeper);
+        TableLayout gridMinesweeper = findViewById(R.id.grid_minesweeper);
 
         // Reiniciar lógica y matriz
         Logicas.iniciarContadorMinas(difficulty);
         int[][] board = Logicas.generateBoard(difficulty);
-        Logicas.crearMatriz(gridMinesweeper, difficulty, board);
+        Logicas.crearMatriz(gridMinesweeper, difficulty, board, this);
 
 
         startTimer(timer);

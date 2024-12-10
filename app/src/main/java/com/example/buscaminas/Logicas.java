@@ -1,12 +1,24 @@
 package com.example.buscaminas;
 
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.SharedPreferences;
+import android.graphics.Color;
+import android.graphics.drawable.Drawable;
+import android.text.Spannable;
+import android.text.SpannableString;
+import android.text.style.ImageSpan;
+import android.util.TypedValue;
+import android.view.Gravity;
+import android.view.View;
 import android.widget.Button;
 import android.widget.GridLayout;
+import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.TableLayout;
+import android.widget.TableRow;
 
 import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.content.res.AppCompatResources;
 
 import java.util.Random;
 
@@ -14,13 +26,12 @@ public class Logicas {
 
     private static int minasRestantes;
     private static final int MINA = -1;
-    private static int revealedCells = 0;  // Contador de celdas reveladas
-    private static int totalCellsWithoutMines;  // Número total de celdas sin minas
 
+    static int encontradas = 0;
     private static final String PREFS_NAME = "GamePrefs";
     private static final String KEY_SELECTED_CHARACTER = "selectedCharacter";
     private static final String KEY_SELECTED_CHARACTER_INDEX = "selectedCharacterIndex";
-
+    static TableLayout tableLayout;
 
     // Método para inicializar el número de minas restantes según la dificultad
     protected static void iniciarContadorMinas(int difficulty) {
@@ -28,46 +39,59 @@ public class Logicas {
     }
 
     // Método estático para crear la matriz de botones en el GridLayout
-    protected static void crearMatriz(GridLayout g, int difficulty, int[][] board) {
-        // Limpiar cualquier vista previa
-        g.removeAllViews();
+    protected static void crearMatriz(TableLayout tableLayout, int difficulty, int[][] board, Context context) {
 
-        // Crear botones para cada celda en la cuadrícula
+        tableLayout.removeAllViews();
+
+        // Crear filas y columnas para la cuadrícula
         for (int row = 0; row < difficulty; row++) {
+            TableRow tableRow = new TableRow(context);
+            TableLayout.LayoutParams rowParams = new TableLayout.LayoutParams(
+                    TableLayout.LayoutParams.MATCH_PARENT,
+                    0 // Altura de la fila (usamos layout_weight para que las filas ocupen espacio dinámicamente)
+            );
+            rowParams.weight = 1.0f; // Esto asegura que las filas se distribuyan equitativamente y ocupen el espacio disponible
+            tableRow.setLayoutParams(rowParams);
+
             for (int col = 0; col < difficulty; col++) {
-                Button cellButton = new Button(g.getContext()); // Necesitamos el contexto aquí
+                // Crear un botón normal para cada celda
+                Button cellButton = new Button(context);
+                cellButton.setText(""); // Puedes poner un texto vacío o cualquier otro texto
+                cellButton.setBackgroundColor(context.getResources().getColor(R.color.colorPrimary, null));
+                cellButton.setClickable(true);
+                cellButton.setFocusable(false);
 
-                // Configurar propiedades del botón
-                GridLayout.LayoutParams params = new GridLayout.LayoutParams();
-                params.width = 0;
-                params.height = 0;
-                params.columnSpec = GridLayout.spec(col, 1f);
-                params.rowSpec = GridLayout.spec(row, 1f);
-                params.setMargins(4, 4, 4, 4); // Margen entre botones
+                // Configurar el layout de cada botón dentro de la fila
+                TableRow.LayoutParams cellParams = new TableRow.LayoutParams(
+                        0, // Ancho dinámico
+                        TableRow.LayoutParams.MATCH_PARENT, // Alto completo para la fila
+                        1.0f // Peso para distribuir igualmente el espacio entre las celdas
+                );
+                cellParams.setMargins(4, 4, 4, 4); // Márgenes opcionales, si los deseas
+                cellButton.setLayoutParams(cellParams);
 
-                cellButton.setLayoutParams(params);
-                cellButton.setBackgroundColor(g.getContext().getResources().getColor(R.color.colorPrimary, null));
-
-
-                // Agregar la lógica del botón (puedes implementar los clicks de las celdas más tarde)
+                // Lógica de clic
                 int finalRow = row;
                 int finalCol = col;
-
                 cellButton.setOnClickListener(v -> {
-                    revealCell(g, finalRow, finalCol, board, difficulty, g.getContext());
+                    revealCell(tableLayout, finalRow, finalCol, board, difficulty, context);
                 });
 
+                // Lógica de clic largo
                 cellButton.setOnLongClickListener(v -> {
-                    // Lógica de clic largo
-                    markCellAsMine(g, finalRow, finalCol);
+                    marcarComoMina(tableLayout, difficulty, finalRow, finalCol, board, context);
                     return true; // Consumir el evento
                 });
 
-                // Añadir el botón al GridLayout
-                g.addView(cellButton);
+                // Añadir el botón a la fila
+                tableRow.addView(cellButton);
             }
+
+            // Añadir la fila al TableLayout
+            tableLayout.addView(tableRow);
         }
     }
+
 
     // Método estático para colocar las minas aleatoriamente en la matriz
     protected static void placeMines(int[][] board, int difficulty) {
@@ -89,8 +113,6 @@ public class Logicas {
 
         // Ahora actualizamos el número de minas adyacentes para cada celda (excepto donde hay una mina)
         contarMinasAdyacentes(board, difficulty);
-        totalCellsWithoutMines = (difficulty * difficulty) - placedMines;
-
 
     }
 
@@ -147,89 +169,111 @@ public class Logicas {
         return row >= 0 && row < difficulty && col >= 0 && col < difficulty;
     }
 
-    private static void revealCell(GridLayout g, int row, int col, int[][] board, int difficulty, Context context) {
+    private static void revealCell(TableLayout tableLayout, int row, int col, int[][] board, int difficulty, Context context) {
+        // Verificar si la celda está dentro del rango válido
         if (!esValido(row, col, difficulty)) return;
 
+        // Obtener la fila correspondiente del TableLayout
+        TableRow tableRow = (TableRow) tableLayout.getChildAt(row);
+        // Obtener el botón correspondiente dentro de la fila
+        Button cellButton = (Button) tableRow.getChildAt(col);
 
-        int index = row * difficulty + col;
-        if (!esIndiceValido(index, g.getChildCount())) return;
+        // Verificar si la celda ya ha sido revelada (esto previene que se revele varias veces)
+        if (!cellButton.getText().toString().isEmpty()) return;
 
-        Button cellButton = (Button) g.getChildAt(index);
-        if (cellButton == null || !cellButton.getText().toString().isEmpty()) return;
-
+        // Si la celda tiene una mina, revelar todas las celdas y mostrar el mensaje de derrota
         if (board[row][col] == MINA) {
-            revealAllCells(g, board, difficulty);
+
+            revealAllCells(tableLayout, board, difficulty, context);
             showGameOverDialog(context);
         } else if (board[row][col] == 0) {
-            revelarAdyacentes(g, row, col, board, difficulty);
+            // Si no hay minas adyacentes, revelar las celdas adyacentes de manera recursiva
+            revelarAdyacentes(tableLayout, row, col, board, difficulty);
         } else {
-            cellButton.setText(String.valueOf(board[row][col]));
-            cellButton.setBackgroundColor(g.getContext().getResources().getColor(R.color.colorRevealedCell, null));
-            revealedCells++;
-        }
+            // Si la celda tiene un número de minas adyacentes, mostrar el número
+            cellButton.setText(String.valueOf(board[row][col])); // Mostrar el número de minas adyacentes
+            cellButton.setBackgroundColor(tableLayout.getContext().getResources().getColor(R.color.colorRevealedCell, null));
 
-        if (revealedCells == totalCellsWithoutMines) {
-            showWinningDialog(context);
         }
-    }
-
-    private static boolean esIndiceValido(int index, int count) {
-        return index >= 0 && index < count;
+        disableButton(cellButton);
     }
 
     // Método recursivo para revelar las celdas adyacentes (si son 0)
-    private static void revelarAdyacentes(GridLayout g, int row, int col, int[][] board, int difficulty) {
-            if (!esValido(row, col, difficulty)) return;
+    private static void revelarAdyacentes(TableLayout g, int row, int col, int[][] board, int difficulty) {
+        // Verificar si la celda está dentro del rango válido
+        if (!esValido(row, col, difficulty)) return;
 
-            int index = row * difficulty + col;
-            if (!esIndiceValido(index, g.getChildCount())) return;
+        // Obtener la fila correspondiente del TableLayout
+        TableRow tableRow = (TableRow) g.getChildAt(row);
 
-            Button cellButton = (Button) g.getChildAt(index);
-            if (cellButton == null || !cellButton.getText().toString().isEmpty() || board[row][col] == Integer.MIN_VALUE) return;
+        // Obtener el botón correspondiente dentro de la fila
+        Button cellButton = (Button) tableRow.getChildAt(col);
 
-            int cellValue = board[row][col];
-            if (cellValue == MINA) return;
+        // Verificar si la celda ya ha sido revelada (esto previene que se revele varias veces)
+        if (cellButton == null || !cellButton.getText().toString().isEmpty() || board[row][col] == Integer.MIN_VALUE)
+            return;
 
-            if (cellValue > 0) {
-                cellButton.setText(String.valueOf(cellValue));
-                cellButton.setBackgroundColor(g.getContext().getResources().getColor(R.color.colorRevealedCell, null));
-                revealedCells++;
-            } else {
-                cellButton.setText("");
-                cellButton.setBackgroundColor(g.getContext().getResources().getColor(R.color.colorRevealedCell, null));
-                board[row][col] = Integer.MIN_VALUE;
-                revealedCells++;
+        int cellValue = board[row][col];
+        if (cellValue == MINA) {
+            disableButton(cellButton);
+            return;
+        }
 
-                for (int i = -1; i <= 1; i++) {
-                    for (int j = -1; j <= 1; j++) {
-                        if (i != 0 || j != 0) {
-                            revelarAdyacentes(g, row + i, col + j, board, difficulty);
-                        }
+        if (cellValue > 0) {
+            cellButton.setText(String.valueOf(cellValue));
+            cellButton.setBackgroundColor(g.getContext().getResources().getColor(R.color.colorRevealedCell, null));
+
+        } else {
+            cellButton.setText("");
+            cellButton.setBackgroundColor(g.getContext().getResources().getColor(R.color.colorRevealedCell, null));
+            board[row][col] = Integer.MIN_VALUE;  // Marcar la celda como revelada
+
+            disableButton(cellButton);
+
+            // Llamar recursivamente a las celdas adyacentes si no tiene minas adyacentes
+            for (int i = -1; i <= 1; i++) {
+                for (int j = -1; j <= 1; j++) {
+                    // Asegúrate de no llamar a la celda actual
+                    if (i != 0 || j != 0) {
+                        revelarAdyacentes(g, row + i, col + j, board, difficulty);
                     }
                 }
-            }
-
-            if (revealedCells == totalCellsWithoutMines) {
-                showWinningDialog(g.getContext());
             }
         }
 
 
-        //TODO CAMBIAR MINAS POR HIPOTENOCHA MIA
-    private static void revealAllCells(GridLayout g, int[][] board, int difficulty) {
+    }
+
+
+    private static void revealAllCells(TableLayout tableLayout, int[][] board, int difficulty, Context context) {
         for (int row = 0; row < difficulty; row++) {
+            // Obtener la fila correspondiente en TableLayout
+            TableRow tableRow = (TableRow) tableLayout.getChildAt(row);
+            int selectedCharacter = getSelectedCharacterResId(context);
+
+            Drawable drawable = AppCompatResources.getDrawable(context, selectedCharacter);
+
             for (int col = 0; col < difficulty; col++) {
-                Button cellButton = (Button) g.getChildAt(row * difficulty + col);
+                // Obtener el botón correspondiente dentro de la fila
+                Button cellButton = (Button) tableRow.getChildAt(col);
 
                 if (board[row][col] == MINA) {
-                    cellButton.setText("💣");
-                    cellButton.setBackgroundColor(g.getContext().getResources().getColor(R.color.colorAccent, null));
+                    cellButton.setPadding(0, 0, 0, 0);
+                    cellButton.setTextColor(Color.RED);
+                    cellButton.setText("X");
+                    cellButton.setTextSize(TypedValue.COMPLEX_UNIT_SP, 48);
+                    cellButton.setBackground(drawable);
+                    cellButton.setScaleY(-1);
+                    // Verificar si el jugador ha ganado
+
+
                 } else {
                     if (board[row][col] > 0) {
                         cellButton.setText(String.valueOf(board[row][col]));
                     }
-                    cellButton.setBackgroundColor(g.getContext().getResources().getColor(R.color.colorRevealedCell, null));
+                    cellButton.setBackgroundColor(tableLayout.getContext().getResources().getColor(R.color.colorRevealedCell, null));
                 }
+
 
                 cellButton.setOnClickListener(null);
                 cellButton.setOnLongClickListener(null);
@@ -237,11 +281,47 @@ public class Logicas {
         }
     }
 
+    private static void marcarComoMina(TableLayout tableLayout, int difficulty, int row, int col, int[][] board, Context context) {
+        // Obtener la fila correspondiente del TableLayout
+        TableRow tableRow = (TableRow) tableLayout.getChildAt(row);
 
-    private static void markCellAsMine(GridLayout g, int row, int col) {
-        Button cellButton = (Button) g.getChildAt(row * g.getColumnCount() + col);
-        cellButton.setBackgroundColor(g.getContext().getResources().getColor(R.color.colorBackground, null));
-        cellButton.setText("M");
+        // Obtener el botón correspondiente dentro de la fila
+        Button cellButton = (Button) tableRow.getChildAt(col);
+
+        // Verificar si en esa casilla hay una mina
+        if (board[row][col] == MINA) {
+            // Obtener el ID del personaje seleccionado (imagen)
+            int selectedCharacter = getSelectedCharacterResId(context);
+
+
+            // Crear un Drawable para la imagen
+            Drawable drawable = AppCompatResources.getDrawable(context, selectedCharacter);
+
+            assert drawable != null;
+            drawable.setBounds(0, 0, 80, 80); // Ajusta el tamaño de la imagen dentro del botón
+
+            // Crear un ImageSpan con la imagen
+            ImageSpan imageSpan = new ImageSpan(drawable);
+
+            // Establecer la imagen en el texto del botón
+            SpannableString spannableString = new SpannableString(" ");  // Puedes agregar cualquier texto aquí si lo deseas
+            spannableString.setSpan(imageSpan, 0, 1, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            cellButton.setText(spannableString);
+            cellButton.setBackgroundColor(context.getResources().getColor(R.color.colorBackground, null));
+            disableButton(cellButton);
+
+            encontradas++;
+            if (encontradas == getContadorMinas(difficulty)) {
+                showWinningDialog(tableLayout.getContext());
+            }
+
+        } else {
+            // Si no es una mina, marcar la casilla con "M" o el valor que prefieras
+            cellButton.setBackgroundColor(context.getResources().getColor(R.color.colorBackground, null));  // Cambiar fondo a color de fondo
+            cellButton.setText("M");  // Marcar la casilla con la letra "M" o el valor que prefieras
+            disableButton(cellButton);
+        }
+
     }
 
 
@@ -250,7 +330,7 @@ public class Logicas {
         builder.setTitle("¡Has Perdido!")
                 .setMessage("¡Lo siento! Has hecho clic en una mina.")
                 .setPositiveButton("Reintentar", (dialog, which) -> {
-                    revealedCells = 0;
+                    encontradas = 0;
                     ((GameActivity) context).recreate();
                 })
                 .setNegativeButton("Salir", (dialog, which) -> {
@@ -262,7 +342,7 @@ public class Logicas {
     }
 
     private static void showWinningDialog(Context context) {
-        revealedCells = 0;
+        encontradas = 0;
 
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
         builder.setTitle("¡Has Ganado!")
@@ -279,23 +359,30 @@ public class Logicas {
     }
 
 
-        private static SharedPreferences getPreferences(Context context) {
-            return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
-        }
-
-        public static void saveSelectedCharacter(Context context, int characterResId, int index) {
-            SharedPreferences prefs = getPreferences(context);
-            prefs.edit()
-                    .putInt(KEY_SELECTED_CHARACTER, characterResId)
-                    .putInt(KEY_SELECTED_CHARACTER_INDEX, index)
-                    .apply();
-        }
-
-        public static int getSelectedCharacterIndex(Context context) {
-            return getPreferences(context).getInt(KEY_SELECTED_CHARACTER_INDEX, 0); // Predeterminado: 0
-        }
-
-        public static int getSelectedCharacterResId(Context context) {
-            return getPreferences(context).getInt(KEY_SELECTED_CHARACTER, R.drawable.hipo1); // Predeterminado: hipo1
-        }
+    private static SharedPreferences getPreferences(Context context) {
+        return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
     }
+
+    public static void saveSelectedCharacter(Context context, int characterResId, int index) {
+        SharedPreferences prefs = getPreferences(context);
+        prefs.edit()
+                .putInt(KEY_SELECTED_CHARACTER, characterResId)
+                .putInt(KEY_SELECTED_CHARACTER_INDEX, index)
+                .apply();
+    }
+
+    public static int getSelectedCharacterIndex(Context context) {
+        return getPreferences(context).getInt(KEY_SELECTED_CHARACTER_INDEX, 0); // Predeterminado: 0
+    }
+
+    public static int getSelectedCharacterResId(Context context) {
+        return getPreferences(context).getInt(KEY_SELECTED_CHARACTER, R.drawable.hipo1); // Predeterminado: hipo1
+    }
+
+    private static void disableButton(Button button) {
+        button.setClickable(false); // Deshabilitar clic en el botón
+        button.setFocusable(false); // Deshabilitar enfoque
+        button.setOnClickListener(null);
+        button.setOnLongClickListener(null);
+    }
+}

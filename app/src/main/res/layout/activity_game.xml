@@ -19,19 +19,20 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"/>
 
-    <!-- GridLayout para el juego de Buscaminas -->
-    <GridLayout
+    <!-- TableLayout para el juego de Buscaminas -->
+    <TableLayout
         android:id="@+id/grid_minesweeper"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:columnCount="8"
-        android:rowCount="8"
-        android:padding="8dp"
-        android:background="@color/colorBackground"
-        app:layout_constraintTop_toBottomOf="@id/toolbar"
-        app:layout_constraintBottom_toTopOf="@id/bottom_container"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"/>
+        android:stretchColumns="*"
+    android:padding="8dp"
+    android:background="@color/colorBackground"
+    app:layout_constraintTop_toBottomOf="@id/toolbar"
+    app:layout_constraintBottom_toTopOf="@id/bottom_container"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintEnd_toEndOf="parent"
+    android:layout_marginTop="16dp" /> <!-- Añadir margen superior para mejor espacio -->
 
     <!-- Contenedor inferior para el cronómetro y contador -->
     <LinearLayout
