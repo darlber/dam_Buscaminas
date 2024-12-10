@@ -1,6 +1,8 @@
 package com.example.buscaminas;
 
+import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.res.TypedArray;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.LayoutInflater;
@@ -10,14 +12,24 @@ import android.view.View;
 import android.widget.GridLayout;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
+import android.widget.Spinner;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
 import java.util.Locale;
+//TODO EL SHARED PREF SE PASAN UN INDEX RARO
+//TODO El usuario realiza un click largo (onLongClick) sobre una casilla donde no hay una
+//hipotenocha. El juego muestra la casilla descubierta y termina.
+//2. El usuario realiza un click largo donde sí hay una hipotenocha, en este caso, se marca y
+//se indica que se ha encontrado una hipotenocha.
+//3. Se realiza un click corto (onClick) en una
+//casilla donde sí hay una hipotenocha. El
+//juego termina con derrota mostrando
+//una hipotenocha muerta (boca abajo y
+//tachada).
 
 public class GameActivity extends AppCompatActivity {
     private TextView timer;
@@ -31,6 +43,7 @@ public class GameActivity extends AppCompatActivity {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+
         // Get saved difficulty
         int difficulty = getSavedDifficulty();
 
@@ -41,14 +54,10 @@ public class GameActivity extends AppCompatActivity {
 
 
         timer = findViewById(R.id.timer);
+        int totalMines = Logicas.getContadorMinas(difficulty);
 
         // Inicializar el TextView para mostrar las minas totales
         TextView totalMinesTextView = findViewById(R.id.mines_counter);
-
-        // Obtener el número de minas según la dificultad
-        int totalMines = Logicas.contadorMinas(difficulty);
-
-        // Actualizar el texto del total de minas
         totalMinesTextView.setText(getString(R.string.minas_total, totalMines));
 
         // Create the game board
@@ -59,13 +68,41 @@ public class GameActivity extends AppCompatActivity {
 
 
         startTimer(timer);
+
+
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_toolbar, menu);
+
         return true;
     }
+
+
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        // Recupera el índice del personaje seleccionado desde SharedPreferences
+        SharedPreferences prefs = getSharedPreferences("GamePrefs", MODE_PRIVATE);
+        int selectedCharacterIndex = prefs.getInt("selectedCharacterIndex", 0); // Default to 0 (Hipo 1)
+
+        // Cargar los datos de personajes
+        Object[] characterData = loadCharacterData(this);
+        String[] characterNames = (String[]) characterData[0];
+        int[] characterImages = (int[]) characterData[1];
+
+        // Asegúrate de que el índice no esté fuera de rango
+        if (selectedCharacterIndex >= 0 && selectedCharacterIndex < characterImages.length) {
+            int selectedCharacterResId = characterImages[selectedCharacterIndex];
+
+            // Actualiza el icono del personaje en el menú
+            MenuItem selectCharacterItem = menu.findItem(R.id.selec_personaje);
+            selectCharacterItem.setIcon(selectedCharacterResId);
+        }
+
+        return true;
+    }
+
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -80,11 +117,77 @@ public class GameActivity extends AppCompatActivity {
             showDifficultySelection();
             return true;
         } else if (itemId == R.id.selec_personaje) {
-            selectCharacter();
+            showCharacterSelectionDialog();
             return true;
         }
         return super.onOptionsItemSelected(item);
     }
+
+    private Object[] loadCharacterData(Context context) {
+        // Cargar los nombres de los personajes desde arrays.xml
+        String[] characterNames = getResources().getStringArray(R.array.nombres);
+
+        // Cargar las imágenes de los personajes desde arrays.xml
+        TypedArray characterImagesArray = getResources().obtainTypedArray(R.array.imagenes);
+        int[] characterImages = new int[characterImagesArray.length()];
+
+        // Llenar el arreglo de imágenes con los recursos de tipo drawable
+        for (int i = 0; i < characterImagesArray.length(); i++) {
+            characterImages[i] = characterImagesArray.getResourceId(i, -1);
+        }
+
+        // Liberar los recursos del TypedArray
+        characterImagesArray.recycle();
+
+        // Devolver los datos como un arreglo de objetos
+        return new Object[]{characterNames, characterImages};
+    }
+
+
+    private void showCharacterSelectionDialog() {
+        // Inflar el layout personalizado
+        LayoutInflater inflater = LayoutInflater.from(this);
+        View dialogView = inflater.inflate(R.layout.selec_personaje_spinner, null);
+
+        // Referencia al Spinner
+        Spinner spinnerCharacter = dialogView.findViewById(R.id.spinner);
+
+        // Cargar los datos de personajes
+        Object[] characterData = loadCharacterData(this);
+        String[] characterNames = (String[]) characterData[0];
+        int[] characterImages = (int[]) characterData[1];
+
+        // Configurar el adaptador para el Spinner
+        AdaptadorPersonajes adapter = new AdaptadorPersonajes(this, characterNames, characterImages);
+        spinnerCharacter.setAdapter(adapter);
+
+        // Cargar el índice de personaje previamente seleccionado
+        int savedIndex = Logicas.getSelectedCharacterIndex(this);
+        spinnerCharacter.setSelection(savedIndex);
+
+        // Mostrar el diálogo de selección
+        new AlertDialog.Builder(this)
+                .setTitle("Selecciona tu personaje")
+                .setView(dialogView)
+                .setPositiveButton("Aceptar", (dialog, which) -> {
+                    int selectedPosition = spinnerCharacter.getSelectedItemPosition();
+                    Logicas.saveSelectedCharacter(this, characterImages[selectedPosition], selectedPosition);
+                    updateToolbarIcon(characterImages[selectedPosition]);
+                })
+                .setNegativeButton("Cancelar", (dialog, which) -> dialog.dismiss())
+                .create()
+                .show();
+    }
+
+
+    private void updateToolbarIcon(int characterResId) {
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        if (toolbar != null) {
+            toolbar.getMenu().findItem(R.id.selec_personaje).setIcon(characterResId);
+        }
+    }
+
+
 
     private void startNewGame() {
         // Reiniciar el juego sin recrear la actividad
@@ -92,7 +195,7 @@ public class GameActivity extends AppCompatActivity {
         GridLayout gridMinesweeper = findViewById(R.id.grid_minesweeper);
 
         // Reiniciar lógica y matriz
-        Logicas.initializeMineCounter(difficulty);
+        Logicas.iniciarContadorMinas(difficulty);
         int[][] board = Logicas.generateBoard(difficulty);
         Logicas.crearMatriz(gridMinesweeper, difficulty, board);
 
@@ -172,14 +275,13 @@ public class GameActivity extends AppCompatActivity {
                 int minutes = (int) (elapsedMillis / 1000) / 60;
 
                 //TODO
-                String timeFormatted = String.format(Locale.getDefault(), "Tiempo: %02d:%02d", minutes, seconds);                timer.setText(timeFormatted);
+                String timeFormatted = String.format(Locale.getDefault(), "Tiempo: %02d:%02d", minutes, seconds);
+                timer.setText(timeFormatted);
 
                 handler.postDelayed(this, 1000); // Update every second
             }
         });
     }
 
-    private void selectCharacter() {
-        Toast.makeText(this, "Seleccionar personaje no implementado aún", Toast.LENGTH_SHORT).show();
-    }
+
 }

@@ -16,10 +16,7 @@
     <string name ="accept">Aceptar</string>
     <string name ="cancel">Cerrar</string>
 
-    <string name="ok">ok</string>
-    <string name="selecciona_pers">Selecciona personaje:</string>
-    <string name="ganador">¡Enhorabuena, has encontrado todas las hipotenochas!</string>
-    <string name="perdedor">Lo siento, has perdido, no hay hipotenochas ahí.</string>
+    <string name="ok">OK</string>
     <string name="titulo_instrucciones">Instrucciones</string>
     <string name="estenmatica">Estenmática</string>
     <string name="minas_total">Minas totales: %d</string>
@@ -28,24 +25,4 @@
     <string name="facil">Fácil (8x8)</string>
     <string name="dificil">Difícil (12x12)</string>
 
-    <string-array name="characters_array">
-        <item>Personaje 1</item>
-        <item>Personaje 2</item>
-        <item>Personaje 3</item>
-    </string-array>
-    <string-array name="nombres">
-        <item>Estenmática</item>
-        <item>Numérica</item>
-        <item>Española</item>
-        <item>Talaverana</item>
-        <item>Flamenca</item>
-        <item>Deportista</item>
-        <item>Geo</item>
-        <item>Enfermera</item>
-        <item>Informática</item>
-    </string-array>
-
-    <integer-array name="imagenes">
-
-    </integer-array>
 </resources>

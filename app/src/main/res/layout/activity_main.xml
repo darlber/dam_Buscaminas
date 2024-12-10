@@ -12,6 +12,7 @@
         android:layout_height="?attr/actionBarSize"
         android:background="@color/colorToolbarBackground"
         android:elevation="4dp"
+        app:titleTextColor="@color/colorBackground"
         app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
@@ -65,7 +66,7 @@
             android:layout_marginBottom="16dp"
             android:backgroundTint="@color/colorPrimary"
             android:padding="12dp"
-            android:text="Selecciona Personaje"
+            android:text="@string/selecciona_personaje"
             android:textColor="@android:color/white" />
 
     </LinearLayout>
