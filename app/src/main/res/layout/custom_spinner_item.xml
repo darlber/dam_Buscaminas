@@ -5,6 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
 
+    <!-- Cada elemento dentro del spinner -->
     <!-- Imagen del personaje -->
     <ImageView
         android:id="@+id/character_image"

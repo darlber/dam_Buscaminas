@@ -17,7 +17,6 @@ import androidx.appcompat.widget.Toolbar;
 import java.util.ArrayList;
 import java.util.List;
 
-//TODO REVISAR CODIGO Y REFACTORIZAR,
 
 public class MainActivity extends AppCompatActivity {
     private SharedPreferences prefs;
@@ -27,14 +26,14 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
-
+        //donde guardaremos la dificultad y el personaje
         prefs = getSharedPreferences("GamePrefs", Context.MODE_PRIVATE);
-
+        //diferentes botones
         Button btnInstructions = findViewById(R.id.btn_instructions);
-        btnInstructions.setOnClickListener(v -> showInstructionsDialog());
+        btnInstructions.setOnClickListener(v -> instrucciones());
 
         Button btnConfigureGame = findViewById(R.id.btn_configure_game);
-        btnConfigureGame.setOnClickListener(v -> showDifficultyDialog(this));
+        btnConfigureGame.setOnClickListener(v -> dificultad(this));
 
         Button btnNewGame = findViewById(R.id.btn_new_game);
         btnNewGame.setOnClickListener(v -> openGameActivity());
@@ -48,11 +47,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void openGameActivity() {
+        //cambiar ventana a juego
         Intent intent = new Intent(MainActivity.this, GameActivity.class);
         startActivity(intent);
     }
 
-    private void showInstructionsDialog() {
+    private void instrucciones() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle(R.string.instrucciones)
                 .setMessage(getString(R.string.texto_instrucciones))
@@ -62,8 +62,8 @@ public class MainActivity extends AppCompatActivity {
         builder.create().show();
     }
 
-    private void showDifficultyDialog(Context context) {
-        // Inflar el diseño del diálogo
+    private void dificultad(Context context) {
+
         LayoutInflater inflater = LayoutInflater.from(this);
         View dialogView = inflater.inflate(R.layout.difficulty, null);
 
@@ -72,6 +72,7 @@ public class MainActivity extends AppCompatActivity {
         RadioButton rbEasy = dialogView.findViewById(R.id.rb_easy);
         RadioButton rbMedium = dialogView.findViewById(R.id.rb_medium);
         RadioButton rbHard = dialogView.findViewById(R.id.rb_hard);
+
 
         int currentDifficulty = getCurrentDifficulty();
         if (currentDifficulty == 8) {
@@ -104,32 +105,28 @@ public class MainActivity extends AppCompatActivity {
         return prefs.getInt("difficulty", 8);
     }
 
-    private int getSelectedCharacterIndex() {
-        return Logicas.getSelectedCharacterIndex(this);
+    private int indexPersonaje() {
+        return Logicas.getPersonajeIndex(this);
     }
 
     private void selectCharacter() {
-        // Inflar el layout personalizado
+
         LayoutInflater inflater = LayoutInflater.from(this);
         View dialogView = inflater.inflate(R.layout.selec_personaje_spinner, null);
 
-        // Referencia al Spinner
-        Spinner spinnerCharacter = dialogView.findViewById(R.id.spinner);
 
-        // Lista de nombres y recursos desde arrays.xml
+        Spinner spinnerCharacter = dialogView.findViewById(R.id.spinner);
+        //Lista nombres e imagenes
         String[] characterNames = getResources().getStringArray(R.array.nombres);
         TypedArray characterImages = getResources().obtainTypedArray(R.array.imagenes);
 
-        // Cargar el personaje previamente seleccionado de SharedPreferences
-        int savedCharacterIndex = getSelectedCharacterIndex();  // Método para obtener el índice guardado
+        int savedCharacterIndex = indexPersonaje();
         String savedCharacterName = characterNames[savedCharacterIndex];
         int savedCharacterImage = characterImages.getResourceId(savedCharacterIndex, -1);
 
-        // Crear una lista modificada para que el personaje seleccionado aparezca en la parte superior
+        //gracias a este arraylist, el personaje que hayamos modificado y que seleccionemos, aparecera siempre como 1º
         List<String> modifiedCharacterNames = new ArrayList<>();
         List<Integer> modifiedCharacterImages = new ArrayList<>();
-
-        // Agregar el personaje seleccionado en el top
         modifiedCharacterNames.add(savedCharacterName);
         modifiedCharacterImages.add(savedCharacterImage);
 
@@ -140,32 +137,30 @@ public class MainActivity extends AppCompatActivity {
                 modifiedCharacterImages.add(characterImages.getResourceId(i, -1));
             }
         }
-
-        // Crear el nuevo adaptador con la lista modificada
+        //el adaptador contendra los items del spinner
         AdaptadorPersonajes updatedAdapter = new AdaptadorPersonajes(this,
                 modifiedCharacterNames.toArray(new String[0]),
                 modifiedCharacterImages.stream().mapToInt(Integer::intValue).toArray());
 
-        // Establecer el adaptador al Spinner
+        //spinner per se
         spinnerCharacter.setAdapter(updatedAdapter);
 
         // Mostrar el diálogo con el spinner
         new AlertDialog.Builder(this)
-                .setTitle("Selecciona tu personaje")
+                .setTitle(R.string.selecciona_personaje)
                 .setView(dialogView)
-                .setPositiveButton("Aceptar", (dialog, which) -> {
+                .setPositiveButton(R.string.accept, (dialog, which) -> {
                     int selectedPosition = spinnerCharacter.getSelectedItemPosition();
 
                     // Guardar el personaje seleccionado para la próxima vez
-                    Logicas.saveSelectedCharacter(this,
+                    Logicas.guardarPersonaje(this,
                             modifiedCharacterImages.get(selectedPosition),
                             selectedPosition);
                 })
-                .setNegativeButton("Cancelar", (dialog, which) -> dialog.dismiss())
+                .setNegativeButton(R.string.cancel, (dialog, which) -> dialog.dismiss())
                 .create()
                 .show();
 
-        // Liberar los recursos de TypedArray
         characterImages.recycle();
     }
 }

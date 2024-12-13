@@ -23,7 +23,7 @@
         android:id="@+id/selec_personaje"
         android:orderInCategory="4"
         android:title="@string/selecciona_personaje"
-        app:showAsAction="always"
+        app:showAsAction="ifRoom"
         android:icon="@drawable/hipo1" />
 
 </menu>

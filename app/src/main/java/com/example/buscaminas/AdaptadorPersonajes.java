@@ -40,13 +40,11 @@ public class AdaptadorPersonajes extends ArrayAdapter<String> {
         return convertView;
     }
 
-    // Método para obtener la vista desplegable de un elemento en el spinner
     @Override
     public View getDropDownView(int position, View convertView, ViewGroup parent) {
         return getView(position, convertView, parent);
     }
 
-    // Clase estática ViewHolder para almacenar las vistas de cada elemento del spinner
     private static class ViewHolder {
         ImageView imageView;
         TextView textView;
