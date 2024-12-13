@@ -27,7 +27,7 @@ public class MainActivity extends AppCompatActivity {
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
         //donde guardaremos la dificultad y el personaje
-        prefs = getSharedPreferences("GamePrefs", Context.MODE_PRIVATE);
+        prefs = getSharedPreferences("Ajustes", Context.MODE_PRIVATE);
         //diferentes botones
         Button btnInstructions = findViewById(R.id.btn_instructions);
         btnInstructions.setOnClickListener(v -> instrucciones());

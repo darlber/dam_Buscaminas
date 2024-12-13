@@ -65,7 +65,7 @@ public class GameActivity extends AppCompatActivity {
         int selectedCharacterIndex = prefs.getInt("selectedCharacterIndex", 0); // Default to 0 (Hipo 1)
 
         // Cargar los datos de personajes
-        Object[] characterData = loadCharacterData(this);
+        Object[] characterData = cargarPersonaje(this);
         int[] characterImages = (int[]) characterData[1];
 
         if (selectedCharacterIndex >= 0 && selectedCharacterIndex < characterImages.length) {
@@ -92,14 +92,14 @@ public class GameActivity extends AppCompatActivity {
             showDifficultySelection();
             return true;
         } else if (itemId == R.id.selec_personaje) {
-            showCharacterSelectionDialog();
+            menuSeleccion();
             return true;
         }
         return super.onOptionsItemSelected(item);
     }
 
     //metodo para cargar el personaje guardado
-    private Object[] loadCharacterData(Context context) {
+    private Object[] cargarPersonaje(Context context) {
 
         String[] characterNames = getResources().getStringArray(R.array.nombres);
 
@@ -117,14 +117,14 @@ public class GameActivity extends AppCompatActivity {
 
 
     //metodo para el spinner de personajes
-    private void showCharacterSelectionDialog() {
+    private void menuSeleccion() {
 
         LayoutInflater inflater = LayoutInflater.from(this);
         View dialogView = inflater.inflate(R.layout.selec_personaje_spinner, null);
 
         Spinner spinnerCharacter = dialogView.findViewById(R.id.spinner);
 
-        Object[] characterData = loadCharacterData(this);
+        Object[] characterData = cargarPersonaje(this);
         String[] characterNames = (String[]) characterData[0];
         int[] characterImages = (int[]) characterData[1];
 
