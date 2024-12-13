@@ -33,7 +33,6 @@ public class Logicas {
         //limpia las anteriores vistas, para poder hacer un cambio de dificultad dinamico
         tableLayout.removeAllViews();
 
-
         for (int row = 0; row < difficulty; row++) {
             TableRow tableRow = new TableRow(context);
             TableLayout.LayoutParams rowParams = new TableLayout.LayoutParams(
@@ -84,7 +83,6 @@ public class Logicas {
             tableLayout.addView(tableRow);
         }
     }
-
 
     protected static void placeMines(int[][] board, int difficulty) {
         int numMines = getContadorMinas(difficulty);
@@ -168,6 +166,7 @@ public class Logicas {
 
             revealAllCells(tableLayout, board, difficulty, context);
             gameOver(context);
+
         } else if (board[row][col] == 0) {
 
             revelarAdyacentes(tableLayout, row, col, board, difficulty);
@@ -225,10 +224,7 @@ public class Logicas {
                 }
             }
         }
-
-
     }
-
 
     private static void revealAllCells(TableLayout tableLayout, int[][] board, int difficulty, Context context) {
         for (int row = 0; row < difficulty; row++) {
@@ -240,14 +236,12 @@ public class Logicas {
                 if (cellView instanceof ImageButton) {
                     ImageButton cellImageButton = (ImageButton) cellView;
 
-
                     if (board[row][col] == MINA) {
 
                         cellImageButton.setPadding(0, 0, 0, 0);
                         cellImageButton.setBackgroundColor(Color.RED);
                         int selectedCharacter = getPersonajeIDResources(context);
                         cellImageButton.setImageResource(selectedCharacter);
-
                         cellImageButton.setScaleY(-1);
 
                     } else {
@@ -263,7 +257,6 @@ public class Logicas {
                     }
                     disableButton(cellImageButton);
                 }
-
             }
         }
     }
@@ -277,6 +270,7 @@ public class Logicas {
             ImageButton cellImageButton = (ImageButton) cellView;
 
             cellImageButton.setBackgroundColor(context.getResources().getColor(R.color.colorBackground, null));
+
             int selectedCharacter = getPersonajeIDResources(context);
             cellImageButton.setImageResource(selectedCharacter);
             disableButton(cellImageButton);
@@ -300,7 +294,6 @@ public class Logicas {
             disableButton(cellButton);
         }
     }
-
 
     private static void gameOver(Context context) {
         AlertDialog.Builder builder = new AlertDialog.Builder(context);

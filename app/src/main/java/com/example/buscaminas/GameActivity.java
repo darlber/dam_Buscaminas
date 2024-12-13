@@ -61,8 +61,8 @@ public class GameActivity extends AppCompatActivity {
     @Override
     public boolean onPrepareOptionsMenu(Menu m) {
         // Recupera el índice del personaje seleccionado desde SharedPreferences
-        SharedPreferences prefs = getSharedPreferences("GamePrefs", MODE_PRIVATE);
-        int selectedCharacterIndex = prefs.getInt("selectedCharacterIndex", 0); // Default to 0 (Hipo 1)
+        SharedPreferences prefs = getSharedPreferences("Ajustes", MODE_PRIVATE);
+        int selectedCharacterIndex = prefs.getInt("personajeSeleccionadoIndex", 0); // Default to 0 (Hipo 1)
 
         // Cargar los datos de personajes
         Object[] characterData = cargarPersonaje(this);
@@ -115,7 +115,6 @@ public class GameActivity extends AppCompatActivity {
         return new Object[]{characterNames, characterImages};
     }
 
-
     //metodo para el spinner de personajes
     private void menuSeleccion() {
 
@@ -147,15 +146,12 @@ public class GameActivity extends AppCompatActivity {
                 .show();
     }
 
-
     private void updateToolbarIcon(int indexPersonaje) {
         Toolbar toolbar = findViewById(R.id.toolbar);
         if (toolbar != null) {
             toolbar.getMenu().findItem(R.id.selec_personaje).setIcon(indexPersonaje);
         }
     }
-
-
 
     private void startNewGame() {
         int difficulty = getDificultad();
